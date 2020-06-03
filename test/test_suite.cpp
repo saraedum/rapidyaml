@@ -160,7 +160,7 @@ constexpr const AllowedFailure g_allowed_failures[] = {
     {"6BCT", CPART_IN_YAML, "TODO[hard]: allow tabs after - or :"},
     {"DC7X", CPART_IN_YAML, "TODO[next]: improve handling of tab characters"},
     {"G5U8", CPART_ALL, "TODO[next]: sequences with -"},
-    {"K858", CPART_OUT_YAML|CPART_IN_JSON, "TODO[next]: emitting block scalars is not idempotent"},
+    //{"K858", CPART_OUT_YAML|CPART_IN_JSON, "TODO[next]: emitting block scalars is not idempotent"},
     {"NAT4", CPART_IN_YAML|CPART_IN_JSON, "TODO[next]: emitting block scalars is not idempotent"},
     {"9MMW", CPART_IN_YAML, "TODO[next]: re the json/yaml incompatibility where a space is required after :"},
 };

@@ -3302,7 +3302,7 @@ csubstr Parser::_scan_block()
 
     _c4dbgpf("scanning block:  style=%s", newline==BLOCK_FOLD ? "fold" : "literal");
     _c4dbgpf("scanning block:  chomp=%s", chomp==CHOMP_CLIP ? "clip" : (chomp==CHOMP_STRIP ? "strip" : "keep"));
-    _c4dbgpf("scanning block: indent=%zd (digits='%.*s')", indentation, _c4prsp(digits));
+    _c4dbgpf("scanning block: indentation=%zu (digits='%.*s')", indentation, _c4prsp(digits));
 
     // start with a zero-length block, already pointing at the right place
     substr raw_block(m_buf.data() + m_state->pos.offset, size_t(0));// m_state->line_contents.full.sub(0, 0);
@@ -3520,12 +3520,12 @@ csubstr Parser::_filter_dquot_scalar(substr s)
  * beginning of each line */
 substr Parser::_filter_whitespace(substr r, size_t indentation, bool leading_whitespace)
 {
-    _c4dbgpf("filtering whitespace: indentation=%zu leading=%d before=\"%.*s\"", indentation, leading_whitespace, _c4prsp(r));
+    _c4dbgpf("filtering whitespace: indentation=%zu leading=%d before='%.*s'", indentation, leading_whitespace, _c4prsp(r));
 
     for(size_t i = 0; i < r.len; ++i)
     {
         const char curr = r[i];
-        const char prev = i   > 0     ? r[i-1] : '\0';
+        const char prev = i > 0 ? r[i-1] : '\0';
         if(curr == ' ' && prev == '\n')
         {
             _c4dbgpf("filtering whitespace: removing indentation i=%zu len=%zu. curr=~%.*s~", i, r.len, _c4prsp(r.first(i)));
@@ -3556,7 +3556,7 @@ substr Parser::_filter_whitespace(substr r, size_t indentation, bool leading_whi
         }
     }
 
-    _c4dbgpf("filtering whitespace: after=\"%.*s\"", _c4prsp(r));
+    _c4dbgpf("filtering whitespace: after='%.*s'", _c4prsp(r));
 
     return r;
 }
@@ -3564,7 +3564,7 @@ substr Parser::_filter_whitespace(substr r, size_t indentation, bool leading_whi
 //-----------------------------------------------------------------------------
 csubstr Parser::_filter_block_scalar(substr s, BlockStyle_e style, BlockChomp_e chomp, size_t indentation)
 {
-    _c4dbgpf("filtering block: '%.*s'", _c4prsp(s));
+    _c4dbgpf("filtering block: indentation=%zu, block='%.*s'", indentation, _c4prsp(s));
 
     substr r = s;
 
@@ -3580,27 +3580,38 @@ csubstr Parser::_filter_block_scalar(substr s, BlockStyle_e style, BlockChomp_e 
 
     switch(chomp)
     {
-    case CHOMP_KEEP: // nothing to do, keep everything
+    case CHOMP_KEEP: // nothing to do, keep all newlines at the end
         _c4dbgp("filtering block: chomp=KEEP (+)");
         break;
     case CHOMP_STRIP: // strip all newlines from the end
     {
         _c4dbgp("filtering block: chomp=STRIP (-)");
-        auto pos = r.last_not_of("\n");
+        size_t pos = r.last_not_of("\n");
         if(pos != npos)
         {
             r = r.left_of(pos, /*include_pos*/true);
         }
+        else if(!r.empty())  // all newlines
+        {
+            r = r.first(0);
+        }
         break;
     }
-    case CHOMP_CLIP: // clip to a single newline
+    case CHOMP_CLIP: // clip to a single newline at the end
     {
         _c4dbgp("filtering block: chomp=CLIP");
-        auto pos = r.last_not_of("\n");
-        if(pos != npos && pos+1 < r.len)
+        size_t pos = r.last_not_of("\n");
+        if(pos != npos)
         {
-            ++pos;
-            r = r.left_of(pos, /*include_pos*/true);
+            if(pos+1 < r.len)
+            {
+                ++pos;
+                r = r.left_of(pos, /*include_pos*/true);
+            }
+        }
+        else if(!r.empty())  // all newlines
+        {
+            r = r.first(1);
         }
         break;
     }
@@ -3617,8 +3628,9 @@ csubstr Parser::_filter_block_scalar(substr s, BlockStyle_e style, BlockChomp_e 
     case BLOCK_FOLD:
         {
             auto pos = r.last_not_of('\n'); // do not fold trailing newlines
-            if((pos != npos) && (pos < r.len))
+            if(pos != npos)
             {
+                RYML_ASSERT(pos < r.len);
                 ++pos; // point pos at the first newline char
                 substr t = r.sub(0, pos);
                 for(size_t i = 0; i < t.len; ++i)
@@ -3641,7 +3653,7 @@ csubstr Parser::_filter_block_scalar(substr s, BlockStyle_e style, BlockChomp_e 
                     }
                     else
                     {
-                        _c4err("crl");
+                        _c4err("internal error");
                         break;
                     }
                 }
@@ -3654,6 +3666,13 @@ csubstr Parser::_filter_block_scalar(substr s, BlockStyle_e style, BlockChomp_e 
                 }
                 // now trim r
                 r = r.sub(0, t.len + nl.len);
+            }
+            else if(!r.empty()) // block is entirely made of newlines
+            {
+                if(chomp == CHOMP_CLIP)
+                {
+                    r = r.first(0);
+                }
             }
         }
         break;

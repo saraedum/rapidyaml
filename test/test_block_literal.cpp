@@ -23,7 +23,8 @@ namespace yml {
     "block literal as map val, explicit indentation 9",\
     "block literal with empty unindented lines, without quotes",\
     "block literal with empty unindented lines, with double quotes",\
-    "block literal with empty unindented lines, with single quotes"
+    "block literal with empty unindented lines, with single quotes",\
+    "block literal: with nested blocks"
 
 
 CASE_GROUP(BLOCK_LITERAL)
@@ -363,6 +364,29 @@ C("block literal with empty unindented lines, with single quotes",
     N("tpl", L{N("src", "#include '{{hdr.filename}}'\n\n{{src.gencode}}\n")})
   }
 ),
+
+C("block literal: with nested blocks",
+R"(
+example: |
+         strip: >-
+         
+         clip: >
+         
+         keep: |+
+         
+example2: |
+         strip: >-
+
+         clip: >
+
+         keep: |+
+
+)",
+L{
+    N("example" , "strip: >-\n\nclip: >\n\nkeep: |+\n"),
+    N("example2", "strip: >-\n\nclip: >\n\nkeep: |+\n"),
+}),
+
     )
 }
 

@@ -16,7 +16,9 @@ namespace yml {
     "block folded as map val, explicit indentation 2, chomp=strip",\
     "block folded as map val, explicit indentation 3",\
     "block folded as map val, explicit indentation 4",\
-    "block folded as map val, explicit indentation 9"
+    "block folded as map val, explicit indentation 9",\
+    "block folded: empty",\
+    "block folded: with nested blocks"
 
 
 CASE_GROUP(BLOCK_FOLDED)
@@ -256,6 +258,44 @@ another: val
     N("another", "val")
   }
 ),
+
+C("block folded: empty",
+R"(
+strip: >-
+
+clip: >
+
+keep: |+
+
+)",
+L{
+    N("strip", ""),
+    N("clip", ""),
+    N("keep", "\n"),
+}),
+
+C("block folded: with nested blocks",
+R"(
+example: >
+         strip: >-
+         
+         clip: >
+         
+         keep: |+
+         
+example2: >
+         strip: >-
+
+         clip: >
+
+         keep: |+
+
+)",
+L{
+    N("example", "strip: >-\nclip: >\nkeep: |+\n"),
+    N("example2", "strip: >-\nclip: >\nkeep: |+\n"),
+}),
+
     )
 }
 
