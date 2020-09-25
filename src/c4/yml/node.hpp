@@ -378,7 +378,7 @@ public:
 
 public:
 
-    inline NodeRef& operator<< (csubstr const& s) // this overload is needed to prevent ambiguity (there's also << for writing a span to a stream)
+    inline NodeRef& operator<< (csubstr const& s) // this overload is needed to prevent ambiguity (there's also << for writing a csubstr to a stream)
     {
         _apply_seed();
         write(this, s);
@@ -423,6 +423,17 @@ public:
         return *this;
     }
 
+    inline NodeRef& operator>> (bool &v)
+    {
+        RYML_ASSERT( ! is_seed());
+        RYML_ASSERT(valid());
+        RYML_ASSERT(get() != nullptr);
+
+        _apply_seed();
+        write(this, v ? "true" : "false");
+        return *this;
+    }
+
     template<class T>
     inline NodeRef const& operator>> (Key<T> v) const
     {
@@ -430,6 +441,20 @@ public:
         RYML_ASSERT(valid());
         RYML_ASSERT(get() != nullptr);
         from_chars(key(), &v.k);
+        return *this;
+    }
+
+    inline NodeRef& operator<< (bool v)
+    {
+        _apply_seed();
+        write(this, v ? "true" : "false");
+        return *this;
+    }
+
+    inline NodeRef& operator>> (Key<bool> v)
+    {
+        _apply_seed();
+        write(this, v ? "true" : "false");
         return *this;
     }
 
